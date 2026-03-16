@@ -105,6 +105,10 @@
   <div class="filter-row">
     <span class="filter-label">Transmission</span>
     <div class="pill-group" id="pillsTx"></div>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">Variant</span>
+    <div class="pill-group" id="pillsVariant"></div>
     <button class="reset-btn" onclick="resetFilters()">Reset Filters</button>
   </div>
 </div>
@@ -168,7 +172,7 @@ const ALL_LISTINGS = {{ all_listings_json | safe }};
 const ACCENT = '#002f34';
 const GREEN  = '#23e5db';
 
-let activeFilters = { year: new Set(), fuel: new Set(), transmission: new Set() };
+let activeFilters = { year: new Set(), fuel: new Set(), transmission: new Set(), variant: new Set() };
 let chartInstances = {};
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -252,6 +256,7 @@ function applyFilters() {
     if (activeFilters.year.size > 0 && !activeFilters.year.has(String(l.year))) return false;
     if (activeFilters.fuel.size > 0 && !activeFilters.fuel.has((l.fuel_type || '').toLowerCase())) return false;
     if (activeFilters.transmission.size > 0 && !activeFilters.transmission.has((l.transmission || '').toLowerCase())) return false;
+    if (activeFilters.variant.size > 0 && !activeFilters.variant.has(l.variant || '')) return false;
     return true;
   });
 
@@ -277,7 +282,7 @@ function toggleFilter(dim, value, checked) {
 }
 
 function resetFilters() {
-  activeFilters = { year: new Set(), fuel: new Set(), transmission: new Set() };
+  activeFilters = { year: new Set(), fuel: new Set(), transmission: new Set(), variant: new Set() };
   document.querySelectorAll('.pill').forEach(cb => cb.checked = false);
   applyFilters();
 }
@@ -411,7 +416,8 @@ function renderTable(filtered) {
 function buildPills() {
   const years = [...new Set(ALL_LISTINGS.map(l => l.year).filter(y => y != null))].sort((a, b) => a - b);
   const fuels = [...new Set(ALL_LISTINGS.map(l => (l.fuel_type || '').toLowerCase()).filter(Boolean))].sort();
-  const txs   = [...new Set(ALL_LISTINGS.map(l => (l.transmission || '').toLowerCase()).filter(Boolean))].sort();
+  const txs      = [...new Set(ALL_LISTINGS.map(l => (l.transmission || '').toLowerCase()).filter(Boolean))].sort();
+  const variants = [...new Set(ALL_LISTINGS.map(l => l.variant).filter(Boolean))].sort();
 
   function makePills(containerId, values, dim) {
     document.getElementById(containerId).innerHTML = values.map((v, i) => `
@@ -421,9 +427,10 @@ function buildPills() {
     `).join('');
   }
 
-  makePills('pillsYear', years, 'year');
-  makePills('pillsFuel', fuels, 'fuel');
-  makePills('pillsTx',   txs,   'transmission');
+  makePills('pillsYear',    years,    'year');
+  makePills('pillsFuel',    fuels,    'fuel');
+  makePills('pillsTx',      txs,      'transmission');
+  makePills('pillsVariant', variants, 'variant');
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
