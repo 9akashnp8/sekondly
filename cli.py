@@ -36,7 +36,7 @@ window.navigator.permissions.query = (params) =>
 @click.option("--no-cache",        is_flag=True,   default=False, help="Ignore cached listing details and re-scrape")
 @click.option("--headless",        is_flag=True,   default=False, help="Run browser in headless mode (may be blocked by OLX)")
 def main(model: str, city: str, max_pages: int, output: str | None, no_cache: bool, headless: bool):
-    """OLX Ads Analyzer — scrape, score, and report on used car listings."""
+    """Sekondly — market intelligence for second-hand car listings."""
     asyncio.run(_run(model, city, max_pages, output, no_cache, headless))
 
 
