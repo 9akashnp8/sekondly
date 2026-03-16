@@ -12,22 +12,21 @@ BASE_URL = "https://www.olx.in"
 async def scrape_search_pages(page: Page, search_url: str, max_pages: int = 10) -> list[Listing]:
     """
     Scrape all listing cards from search result pages (Pass 1).
-    Handles pagination up to max_pages.
+    Clicks "Load More" until all listings are loaded or max_pages is reached.
     """
+    print("  Loading search page...")
+    await page.goto(search_url, wait_until="commit", timeout=60000)
+
+    try:
+        await page.wait_for_selector('[data-aut-id="itemsList"]', timeout=20000)
+    except Exception:
+        print("  No listings found, stopping.")
+        return []
+
+    seen_ids: set[str] = set()
     listings: list[Listing] = []
-    current_url = search_url
 
-    for page_num in range(1, max_pages + 1):
-        print(f"  Scraping search page {page_num}...")
-        await page.goto(current_url, wait_until="commit", timeout=60000)
-
-        # Wait for listings to render
-        try:
-            await page.wait_for_selector('[data-aut-id="itemsList"]', timeout=20000)
-        except Exception:
-            print(f"  No listings found on page {page_num}, stopping.")
-            break
-
+    for load_num in range(1, max_pages + 1):
         html = await page.content()
         soup = BeautifulSoup(html, "html.parser")
 
@@ -36,19 +35,26 @@ async def scrape_search_pages(page: Page, search_url: str, max_pages: int = 10) 
             break
 
         cards = items_list.find_all(attrs={"data-aut-id": "itemBox2"})
-        if not cards:
+        new_listings = []
+        for card in cards:
+            listing = _parse_card(card)
+            if listing and listing.listing_id not in seen_ids:
+                seen_ids.add(listing.listing_id)
+                new_listings.append(listing)
+
+        listings.extend(new_listings)
+        print(f"  Load {load_num}: {len(new_listings)} new listings (total: {len(listings)})")
+
+        load_more_btn = await page.query_selector('[data-aut-id="btnLoadMore"]')
+        if not load_more_btn:
             break
 
-        page_listings = [_parse_card(card) for card in cards]
-        page_listings = [l for l in page_listings if l is not None]
-        listings.extend(page_listings)
-        print(f"  Found {len(page_listings)} listings on page {page_num}.")
-
-        # Check for next page button
-        next_btn = soup.find("a", attrs={"data-aut-id": "pagination-next"})
-        if not next_btn or not next_btn.get("href"):
-            break
-        current_url = BASE_URL + next_btn["href"]
+        await load_more_btn.click()
+        # Wait for new cards to appear
+        try:
+            await page.wait_for_load_state("networkidle", timeout=10000)
+        except Exception:
+            pass  # networkidle may timeout on slow connections; proceed anyway
 
     return listings
 
