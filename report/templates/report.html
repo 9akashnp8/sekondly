@@ -17,6 +17,28 @@
   header { background: var(--accent); color: #fff; padding: 24px 32px; }
   header h1 { font-size: 1.6rem; font-weight: 700; }
   header p  { color: #a0c4c5; font-size: 0.9rem; margin-top: 4px; }
+
+  /* Filter bar */
+  .filter-bar { background: var(--card); border-bottom: 1px solid var(--border);
+                padding: 12px 32px; position: sticky; top: 0; z-index: 10;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+  .filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .filter-row:last-child { margin-bottom: 0; }
+  .filter-label { font-size: 0.72rem; font-weight: 700; color: var(--muted);
+                  min-width: 96px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .pill-group { display: flex; flex-wrap: wrap; gap: 5px; }
+  .pill { display: none; }
+  .pill + label { display: inline-block; padding: 3px 11px; border-radius: 20px;
+                  border: 1px solid var(--border); font-size: 0.78rem; font-weight: 500;
+                  cursor: pointer; background: #fff; color: var(--text);
+                  user-select: none; transition: background 0.12s, color 0.12s, border-color 0.12s; }
+  .pill:checked + label { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .pill + label:hover { border-color: var(--accent); }
+  .reset-btn { padding: 4px 14px; border: none; border-radius: 20px; background: var(--border);
+               color: var(--muted); font-size: 0.78rem; cursor: pointer; font-weight: 600;
+               transition: background 0.12s, color 0.12s; }
+  .reset-btn:hover { background: var(--accent); color: #fff; }
+
   .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
   h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--accent); }
   .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -60,25 +82,43 @@
   .score-fill { height: 100%; border-radius: 4px; background: var(--accent); }
   a.listing-link { color: var(--accent); text-decoration: none; font-weight: 600; }
   a.listing-link:hover { text-decoration: underline; }
+  .empty-msg { text-align: center; color: var(--muted); padding: 32px; font-size: 0.9rem; }
   @media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <header>
   <h1>{{ query | title }} — Market Report</h1>
-  <p>{{ city | title }} &nbsp;·&nbsp; {{ kpis.total_listings }} listings analysed &nbsp;·&nbsp; <span style="opacity:0.5;font-size:0.8rem">Sekondly</span></p>
+  <p>{{ city | title }} &nbsp;·&nbsp; <span id="headerCount">{{ kpis.total_listings }}</span> listings analysed &nbsp;·&nbsp; <span style="opacity:0.5;font-size:0.8rem">Sekondly</span></p>
 </header>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <div class="filter-row">
+    <span class="filter-label">Year</span>
+    <div class="pill-group" id="pillsYear"></div>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">Fuel</span>
+    <div class="pill-group" id="pillsFuel"></div>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">Transmission</span>
+    <div class="pill-group" id="pillsTx"></div>
+    <button class="reset-btn" onclick="resetFilters()">Reset Filters</button>
+  </div>
+</div>
 
 <div class="container">
 
   <!-- KPI Summary -->
   <h2>Market Overview</h2>
   <div class="kpi-grid">
-    <div class="kpi-card"><div class="val">{{ kpis.total_listings }}</div><div class="lbl">Total Listings</div></div>
-    <div class="kpi-card"><div class="val">{{ kpis.price_median | inr }}</div><div class="lbl">Median Price</div></div>
-    <div class="kpi-card"><div class="val">{{ kpis.price_mean | inr }}</div><div class="lbl">Average Price</div></div>
-    <div class="kpi-card"><div class="val">{{ kpis.price_min | inr }}</div><div class="lbl">Lowest Price</div></div>
-    <div class="kpi-card"><div class="val">{{ kpis.price_max | inr }}</div><div class="lbl">Highest Price</div></div>
+    <div class="kpi-card"><div class="val" id="kpiCount">{{ kpis.total_listings }}</div><div class="lbl">Total Listings</div></div>
+    <div class="kpi-card"><div class="val" id="kpiMedian">{{ kpis.price_median | inr }}</div><div class="lbl">Median Price</div></div>
+    <div class="kpi-card"><div class="val" id="kpiMean">{{ kpis.price_mean | inr }}</div><div class="lbl">Average Price</div></div>
+    <div class="kpi-card"><div class="val" id="kpiMin">{{ kpis.price_min | inr }}</div><div class="lbl">Lowest Price</div></div>
+    <div class="kpi-card"><div class="val" id="kpiMax">{{ kpis.price_max | inr }}</div><div class="lbl">Highest Price</div></div>
   </div>
 
   <!-- Charts -->
@@ -103,33 +143,10 @@
   </div>
 
   <!-- Top Deals -->
-  {% if top_deals %}
-  <h2>Top Recommended Listings</h2>
-  <div class="deals-grid">
-    {% for s in top_deals %}
-    <div class="deal-card">
-      <img src="{{ s.listing.image_url }}" alt="{{ s.listing.title }}" loading="lazy">
-      <div class="deal-body">
-        <div class="deal-title">{{ s.listing.title }}</div>
-        <div class="deal-price">{{ s.listing.price | inr }}</div>
-        <div class="deal-meta">
-          {{ s.listing.year or '—' }} &nbsp;·&nbsp;
-          {{ "{:,}".format(s.listing.km_driven) if s.listing.km_driven else '—' }} km &nbsp;·&nbsp;
-          {{ s.listing.fuel_type | title if s.listing.fuel_type else '—' }} &nbsp;·&nbsp;
-          {{ s.listing.transmission | title if s.listing.transmission else '—' }}
-          {% if s.listing.owners %} &nbsp;·&nbsp; {{ s.listing.owners }}{% if s.listing.owners == 1 %}st{% elif s.listing.owners == 2 %}nd{% elif s.listing.owners == 3 %}rd{% else %}th{% endif %} owner{% endif %}
-        </div>
-        <span class="verdict verdict-great">{{ s.verdict }}</span>
-        <span style="font-size:0.8rem;color:var(--muted);margin-left:6px;">Score: {{ s.score }}/100</span>
-        <ul class="reasons">
-          {% for r in s.reasons %}<li>{{ r }}</li>{% endfor %}
-        </ul>
-      </div>
-      <a class="deal-link" href="{{ s.listing.url }}" target="_blank">View on OLX →</a>
-    </div>
-    {% endfor %}
+  <div id="dealsSection">
+    <h2>Top Recommended Listings</h2>
+    <div class="deals-grid" id="dealsGrid"></div>
   </div>
-  {% endif %}
 
   <!-- All Listings Table -->
   <h2>All Listings</h2>
@@ -141,104 +158,276 @@
         <th>Location</th><th>Score</th><th>Verdict</th>
       </tr>
     </thead>
-    <tbody>
-      {% for s in all_listings %}
-      <tr>
-        <td><a class="listing-link" href="{{ s.listing.url }}" target="_blank">{{ s.listing.title }}</a></td>
-        <td>{{ s.listing.price | inr }}</td>
-        <td>{{ s.listing.year or '—' }}</td>
-        <td>{{ "{:,}".format(s.listing.km_driven) if s.listing.km_driven else '—' }}</td>
-        <td>{{ s.listing.fuel_type | title if s.listing.fuel_type else '—' }}</td>
-        <td>{{ s.listing.transmission | title if s.listing.transmission else '—' }}</td>
-        <td>{{ s.listing.owners or '—' }}</td>
-        <td>{{ s.listing.location or '—' }}</td>
-        <td>
-          <span class="score-bar"><span class="score-fill" style="width:{{ s.score }}%"></span></span>
-          {{ s.score }}
-        </td>
-        <td>
-          {% if s.verdict == "Great Deal" %}<span class="verdict verdict-great">{{ s.verdict }}</span>
-          {% elif s.verdict == "Fair Price" %}<span class="verdict verdict-fair">{{ s.verdict }}</span>
-          {% else %}<span class="verdict verdict-over">{{ s.verdict }}</span>{% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
+    <tbody id="tableBody"></tbody>
   </table>
 
 </div>
 
 <script>
+const ALL_LISTINGS = {{ all_listings_json | safe }};
 const ACCENT = '#002f34';
 const GREEN  = '#23e5db';
-const chartDefaults = { responsive: true, plugins: { legend: { display: false } } };
 
-// Price Distribution Histogram
-(function() {
-  const prices = {{ chart_price_dist | safe }};
-  if (!prices.length) return;
+let activeFilters = { year: new Set(), fuel: new Set(), transmission: new Set() };
+let chartInstances = {};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function median(arr) {
+  if (!arr.length) return 0;
+  const sorted = [...arr].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+function mean(arr) {
+  if (!arr.length) return 0;
+  return arr.reduce((s, v) => s + v, 0) / arr.length;
+}
+
+function groupBy(arr, key) {
+  return arr.reduce((acc, item) => {
+    const k = (item[key] != null && item[key] !== '') ? String(item[key]) : 'Unknown';
+    if (!acc[k]) acc[k] = [];
+    acc[k].push(item);
+    return acc;
+  }, {});
+}
+
+function formatInr(value) {
+  if (value == null || value === 0) return 'N/A';
+  const s = Math.round(value).toString();
+  if (s.length <= 3) return '₹' + s;
+  const last3 = s.slice(-3);
+  let rest = s.slice(0, -3);
+  const groups = [];
+  while (rest.length > 2) { groups.unshift(rest.slice(-2)); rest = rest.slice(0, -2); }
+  if (rest) groups.unshift(rest);
+  return '₹' + groups.join(',') + ',' + last3;
+}
+
+function histogramBins(prices, n) {
+  n = n || 15;
+  if (!prices.length) return { labels: [], data: [] };
   const min = Math.min(...prices), max = Math.max(...prices);
-  const bins = 15;
-  const step = (max - min) / bins;
+  if (min === max) return { labels: [formatInr(min)], data: [prices.length] };
+  const step = (max - min) / n;
   const labels = [], data = [];
-  for (let i = 0; i < bins; i++) {
+  for (let i = 0; i < n; i++) {
     const lo = min + i * step, hi = lo + step;
     labels.push('₹' + Math.round(lo / 1e5) + 'L');
-    data.push(prices.filter(p => p >= lo && p < hi).length);
+    data.push(prices.filter(p => p >= lo && (i === n - 1 ? p <= hi : p < hi)).length);
   }
-  new Chart(document.getElementById('chartDist'), {
-    type: 'bar',
-    data: { labels, datasets: [{ data, backgroundColor: ACCENT, borderRadius: 4 }] },
-    options: { ...chartDefaults, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-  });
-})();
+  return { labels, data };
+}
 
-// Median Price by Year
-(function() {
-  const rows = {{ chart_by_year | safe }};
-  if (!rows.length) return;
-  new Chart(document.getElementById('chartYear'), {
-    type: 'line',
-    data: {
-      labels: rows.map(r => r.year),
-      datasets: [{
-        data: rows.map(r => r.median_price),
-        borderColor: ACCENT, backgroundColor: 'rgba(0,47,52,0.08)',
-        pointBackgroundColor: ACCENT, tension: 0.3, fill: true
-      }]
-    },
-    options: { ...chartDefaults, scales: { y: { ticks: { callback: v => '₹' + (v/1e5).toFixed(1) + 'L' } } } }
-  });
-})();
+function escHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
-// By Fuel
-(function() {
-  const rows = {{ chart_by_fuel | safe }};
-  if (!rows.length) return;
-  const colors = ['#002f34','#23e5db','#6b7280','#d97706','#7c3aed'];
-  new Chart(document.getElementById('chartFuel'), {
-    type: 'bar',
-    data: {
-      labels: rows.map(r => r.fuel_type.charAt(0).toUpperCase() + r.fuel_type.slice(1)),
-      datasets: [{ data: rows.map(r => r.median_price), backgroundColor: colors, borderRadius: 4 }]
-    },
-    options: { ...chartDefaults, scales: { y: { ticks: { callback: v => '₹' + (v/1e5).toFixed(1) + 'L' } } } }
-  });
-})();
+function cap(s) {
+  if (!s) return '—';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
-// By Transmission
-(function() {
-  const rows = {{ chart_by_transmission | safe }};
-  if (!rows.length) return;
-  new Chart(document.getElementById('chartTx'), {
-    type: 'doughnut',
-    data: {
-      labels: rows.map(r => r.transmission.charAt(0).toUpperCase() + r.transmission.slice(1) + ' (' + r.count + ')'),
-      datasets: [{ data: rows.map(r => r.median_price), backgroundColor: [ACCENT, GREEN, '#6b7280'] }]
-    },
-    options: { responsive: true, plugins: { legend: { display: true, position: 'bottom' } } }
+function ownerSuffix(n) {
+  if (n === 1) return 'st'; if (n === 2) return 'nd'; if (n === 3) return 'rd'; return 'th';
+}
+
+function verdictClass(v) {
+  if (v === 'Great Deal') return 'verdict-great';
+  if (v === 'Fair Price') return 'verdict-fair';
+  return 'verdict-over';
+}
+
+// ── Filter logic ──────────────────────────────────────────────────────────────
+
+function applyFilters() {
+  const filtered = ALL_LISTINGS.filter(l => {
+    if (activeFilters.year.size > 0 && !activeFilters.year.has(String(l.year))) return false;
+    if (activeFilters.fuel.size > 0 && !activeFilters.fuel.has((l.fuel_type || '').toLowerCase())) return false;
+    if (activeFilters.transmission.size > 0 && !activeFilters.transmission.has((l.transmission || '').toLowerCase())) return false;
+    return true;
   });
-})();
+
+  const prices = filtered.map(l => l.price).filter(p => p > 0);
+
+  // Update KPI cards
+  document.getElementById('kpiCount').textContent = filtered.length;
+  document.getElementById('headerCount').textContent = filtered.length;
+  document.getElementById('kpiMedian').textContent = formatInr(median(prices));
+  document.getElementById('kpiMean').textContent = formatInr(mean(prices));
+  document.getElementById('kpiMin').textContent = prices.length ? formatInr(Math.min(...prices)) : 'N/A';
+  document.getElementById('kpiMax').textContent = prices.length ? formatInr(Math.max(...prices)) : 'N/A';
+
+  renderCharts(filtered, prices);
+  renderDeals(filtered);
+  renderTable(filtered);
+}
+
+function toggleFilter(dim, value, checked) {
+  if (checked) activeFilters[dim].add(value);
+  else activeFilters[dim].delete(value);
+  applyFilters();
+}
+
+function resetFilters() {
+  activeFilters = { year: new Set(), fuel: new Set(), transmission: new Set() };
+  document.querySelectorAll('.pill').forEach(cb => cb.checked = false);
+  applyFilters();
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+
+function renderCharts(filtered, prices) {
+  const chartDefaults = { responsive: true, plugins: { legend: { display: false } } };
+
+  Object.values(chartInstances).forEach(c => c.destroy());
+  chartInstances = {};
+
+  // Price Distribution
+  const dist = histogramBins(prices);
+  if (dist.labels.length) {
+    chartInstances.dist = new Chart(document.getElementById('chartDist'), {
+      type: 'bar',
+      data: { labels: dist.labels, datasets: [{ data: dist.data, backgroundColor: ACCENT, borderRadius: 4 }] },
+      options: { ...chartDefaults, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+  }
+
+  // By Year
+  const byYear = groupBy(filtered.filter(l => l.year), 'year');
+  const yearKeys = Object.keys(byYear).filter(k => k !== 'Unknown').sort((a, b) => Number(a) - Number(b));
+  if (yearKeys.length) {
+    chartInstances.year = new Chart(document.getElementById('chartYear'), {
+      type: 'line',
+      data: {
+        labels: yearKeys,
+        datasets: [{
+          data: yearKeys.map(k => median(byYear[k].map(l => l.price))),
+          borderColor: ACCENT, backgroundColor: 'rgba(0,47,52,0.08)',
+          pointBackgroundColor: ACCENT, tension: 0.3, fill: true
+        }]
+      },
+      options: { ...chartDefaults, scales: { y: { ticks: { callback: v => '₹' + (v / 1e5).toFixed(1) + 'L' } } } }
+    });
+  }
+
+  // By Fuel
+  const byFuel = groupBy(filtered.filter(l => l.fuel_type), 'fuel_type');
+  const fuelKeys = Object.keys(byFuel).filter(k => k !== 'Unknown').sort();
+  const fuelColors = ['#002f34', '#23e5db', '#6b7280', '#d97706', '#7c3aed'];
+  if (fuelKeys.length) {
+    chartInstances.fuel = new Chart(document.getElementById('chartFuel'), {
+      type: 'bar',
+      data: {
+        labels: fuelKeys.map(cap),
+        datasets: [{ data: fuelKeys.map(k => median(byFuel[k].map(l => l.price))), backgroundColor: fuelColors, borderRadius: 4 }]
+      },
+      options: { ...chartDefaults, scales: { y: { ticks: { callback: v => '₹' + (v / 1e5).toFixed(1) + 'L' } } } }
+    });
+  }
+
+  // By Transmission
+  const byTx = groupBy(filtered.filter(l => l.transmission), 'transmission');
+  const txKeys = Object.keys(byTx).filter(k => k !== 'Unknown').sort();
+  if (txKeys.length) {
+    chartInstances.tx = new Chart(document.getElementById('chartTx'), {
+      type: 'doughnut',
+      data: {
+        labels: txKeys.map(k => cap(k) + ' (' + byTx[k].length + ')'),
+        datasets: [{ data: txKeys.map(k => median(byTx[k].map(l => l.price))), backgroundColor: [ACCENT, GREEN, '#6b7280'] }]
+      },
+      options: { responsive: true, plugins: { legend: { display: true, position: 'bottom' } } }
+    });
+  }
+}
+
+// ── Deals ─────────────────────────────────────────────────────────────────────
+
+function renderDeals(filtered) {
+  const deals = filtered.filter(l => l.verdict === 'Great Deal').slice(0, 10);
+  const section = document.getElementById('dealsSection');
+  const grid = document.getElementById('dealsGrid');
+  if (!deals.length) { section.style.display = 'none'; return; }
+  section.style.display = '';
+  grid.innerHTML = deals.map(l => `
+    <div class="deal-card">
+      <img src="${escHtml(l.image_url || '')}" alt="${escHtml(l.title)}" loading="lazy">
+      <div class="deal-body">
+        <div class="deal-title">${escHtml(l.title)}</div>
+        <div class="deal-price">${formatInr(l.price)}</div>
+        <div class="deal-meta">
+          ${l.year || '—'} &nbsp;·&nbsp;
+          ${l.km_driven ? l.km_driven.toLocaleString('en-IN') + ' km' : '—'} &nbsp;·&nbsp;
+          ${cap(l.fuel_type)} &nbsp;·&nbsp; ${cap(l.transmission)}
+          ${l.owners ? ' &nbsp;·&nbsp; ' + l.owners + ownerSuffix(l.owners) + ' owner' : ''}
+        </div>
+        <span class="verdict ${verdictClass(l.verdict)}">${escHtml(l.verdict)}</span>
+        <span style="font-size:0.8rem;color:var(--muted);margin-left:6px;">Score: ${l.score}/100</span>
+        <ul class="reasons">${(l.reasons || []).map(r => '<li>' + escHtml(r) + '</li>').join('')}</ul>
+      </div>
+      <a class="deal-link" href="${escHtml(l.url)}" target="_blank">View on OLX →</a>
+    </div>
+  `).join('');
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+
+function renderTable(filtered) {
+  const tbody = document.getElementById('tableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty-msg">No listings match the selected filters.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(l => `
+    <tr>
+      <td><a class="listing-link" href="${escHtml(l.url)}" target="_blank">${escHtml(l.title)}</a></td>
+      <td>${formatInr(l.price)}</td>
+      <td>${l.year || '—'}</td>
+      <td>${l.km_driven ? l.km_driven.toLocaleString('en-IN') : '—'}</td>
+      <td>${cap(l.fuel_type)}</td>
+      <td>${cap(l.transmission)}</td>
+      <td>${l.owners || '—'}</td>
+      <td>${escHtml(l.location || '—')}</td>
+      <td>
+        <span class="score-bar"><span class="score-fill" style="width:${l.score}%"></span></span>
+        ${l.score}
+      </td>
+      <td><span class="verdict ${verdictClass(l.verdict)}">${escHtml(l.verdict)}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ── Build filter pills ────────────────────────────────────────────────────────
+
+function buildPills() {
+  const years = [...new Set(ALL_LISTINGS.map(l => l.year).filter(y => y != null))].sort((a, b) => a - b);
+  const fuels = [...new Set(ALL_LISTINGS.map(l => (l.fuel_type || '').toLowerCase()).filter(Boolean))].sort();
+  const txs   = [...new Set(ALL_LISTINGS.map(l => (l.transmission || '').toLowerCase()).filter(Boolean))].sort();
+
+  function makePills(containerId, values, dim) {
+    document.getElementById(containerId).innerHTML = values.map((v, i) => `
+      <input type="checkbox" class="pill" id="pill_${dim}_${i}" value="${escHtml(String(v))}"
+             onchange="toggleFilter('${dim}', this.value, this.checked)">
+      <label for="pill_${dim}_${i}">${escHtml(cap(String(v)))}</label>
+    `).join('');
+  }
+
+  makePills('pillsYear', years, 'year');
+  makePills('pillsFuel', fuels, 'fuel');
+  makePills('pillsTx',   txs,   'transmission');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+buildPills();
+applyFilters();
 </script>
 </body>
 </html>

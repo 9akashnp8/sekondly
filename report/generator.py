@@ -21,19 +21,34 @@ def generate_report(
     template = env.get_template("report.html")
 
     top_deals = [s for s in scored if s.verdict == "Great Deal"][:10]
-    all_listings = scored[:50]  # cap table at 50
+
+    all_listings_json = json.dumps([
+        {
+            "listing_id": s.listing.listing_id,
+            "title": s.listing.title,
+            "url": s.listing.url,
+            "image_url": s.listing.image_url,
+            "price": s.listing.price,
+            "year": s.listing.year,
+            "km_driven": s.listing.km_driven,
+            "fuel_type": s.listing.fuel_type,
+            "transmission": s.listing.transmission,
+            "owners": s.listing.owners,
+            "location": s.listing.location,
+            "posted_date": s.listing.posted_date.isoformat() if s.listing.posted_date else None,
+            "score": s.score,
+            "verdict": s.verdict,
+            "reasons": s.reasons,
+        }
+        for s in scored
+    ])
 
     html = template.render(
         query=query,
         city=city,
         kpis=kpis,
         top_deals=top_deals,
-        all_listings=all_listings,
-        # JSON payloads for Chart.js
-        chart_price_dist=json.dumps(kpis.price_distribution),
-        chart_by_year=json.dumps(kpis.by_year),
-        chart_by_fuel=json.dumps(kpis.by_fuel),
-        chart_by_transmission=json.dumps(kpis.by_transmission),
+        all_listings_json=all_listings_json,
     )
 
     output_path.write_text(html, encoding="utf-8")
