@@ -34,6 +34,7 @@ def generate_report(
             "fuel_type": s.listing.fuel_type,
             "transmission": s.listing.transmission,
             "owners": s.listing.owners,
+            "variant": s.listing.variant,
             "location": s.listing.location,
             "posted_date": s.listing.posted_date.isoformat() if s.listing.posted_date else None,
             "score": s.score,

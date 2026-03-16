@@ -153,7 +153,7 @@
   <table>
     <thead>
       <tr>
-        <th>Title</th><th>Price</th><th>Year</th><th>KM</th>
+        <th>Title</th><th>Variant</th><th>Price</th><th>Year</th><th>KM</th>
         <th>Fuel</th><th>Transmission</th><th>Owners</th>
         <th>Location</th><th>Score</th><th>Verdict</th>
       </tr>
@@ -361,6 +361,7 @@ function renderDeals(filtered) {
       <img src="${escHtml(l.image_url || '')}" alt="${escHtml(l.title)}" loading="lazy">
       <div class="deal-body">
         <div class="deal-title">${escHtml(l.title)}</div>
+        ${l.variant ? `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">${escHtml(l.variant)}</div>` : ''}
         <div class="deal-price">${formatInr(l.price)}</div>
         <div class="deal-meta">
           ${l.year || '—'} &nbsp;·&nbsp;
@@ -382,12 +383,13 @@ function renderDeals(filtered) {
 function renderTable(filtered) {
   const tbody = document.getElementById('tableBody');
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="10" class="empty-msg">No listings match the selected filters.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-msg">No listings match the selected filters.</td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map(l => `
     <tr>
       <td><a class="listing-link" href="${escHtml(l.url)}" target="_blank">${escHtml(l.title)}</a></td>
+      <td>${escHtml(l.variant || '—')}</td>
       <td>${formatInr(l.price)}</td>
       <td>${l.year || '—'}</td>
       <td>${l.km_driven ? l.km_driven.toLocaleString('en-IN') : '—'}</td>
