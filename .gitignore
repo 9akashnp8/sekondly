@@ -1,0 +1,19 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Generated reports
+report_*.html
+
+# Scraper cache
+*.db
+
+# uv scaffold
+main.py

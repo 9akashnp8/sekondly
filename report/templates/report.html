@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ query | title }} — OLX Market Report ({{ city | title }})</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f5f5; --card: #fff; --accent: #002f34; --green: #23e5db;
+    --text: #1a1a1a; --muted: #666; --border: #e0e0e0;
+    --great: #16a34a; --fair: #d97706; --over: #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+         background: var(--bg); color: var(--text); line-height: 1.5; }
+  header { background: var(--accent); color: #fff; padding: 24px 32px; }
+  header h1 { font-size: 1.6rem; font-weight: 700; }
+  header p  { color: #a0c4c5; font-size: 0.9rem; margin-top: 4px; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
+  h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--accent); }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+              gap: 12px; margin-bottom: 32px; }
+  .kpi-card { background: var(--card); border-radius: 10px; padding: 20px 16px;
+              border: 1px solid var(--border); text-align: center; }
+  .kpi-card .val { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+  .kpi-card .lbl { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
+  .chart-card { background: var(--card); border-radius: 10px; padding: 20px;
+                border: 1px solid var(--border); }
+  .chart-card canvas { max-height: 240px; }
+  .deals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 16px; margin-bottom: 32px; }
+  .deal-card { background: var(--card); border-radius: 10px; border: 1px solid var(--border);
+               overflow: hidden; display: flex; flex-direction: column; }
+  .deal-card img { width: 100%; height: 160px; object-fit: cover; background: #eee; }
+  .deal-body { padding: 14px; flex: 1; }
+  .deal-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; }
+  .deal-price { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+  .deal-meta { font-size: 0.8rem; color: var(--muted); margin: 4px 0 10px; }
+  .verdict { display: inline-block; font-size: 0.75rem; font-weight: 700;
+             padding: 3px 10px; border-radius: 20px; margin-bottom: 8px; }
+  .verdict-great { background: #dcfce7; color: var(--great); }
+  .verdict-fair  { background: #fef3c7; color: var(--fair); }
+  .verdict-over  { background: #fee2e2; color: var(--over); }
+  .reasons { list-style: none; padding: 0; }
+  .reasons li { font-size: 0.78rem; color: var(--muted); padding: 2px 0; }
+  .reasons li::before { content: "· "; }
+  .deal-link { display: block; text-align: center; padding: 10px;
+               background: var(--accent); color: #fff; text-decoration: none;
+               font-size: 0.85rem; font-weight: 600; margin-top: auto; }
+  .deal-link:hover { background: #004f54; }
+  table { width: 100%; border-collapse: collapse; background: var(--card);
+          border-radius: 10px; overflow: hidden; border: 1px solid var(--border); font-size: 0.85rem; }
+  thead th { background: var(--accent); color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; }
+  tbody tr:nth-child(even) { background: #fafafa; }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  .score-bar { background: #e5e7eb; border-radius: 4px; height: 6px; width: 80px; display: inline-block; vertical-align: middle; margin-right: 6px; }
+  .score-fill { height: 100%; border-radius: 4px; background: var(--accent); }
+  a.listing-link { color: var(--accent); text-decoration: none; font-weight: 600; }
+  a.listing-link:hover { text-decoration: underline; }
+  @media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>{{ query | title }} — Market Report</h1>
+  <p>{{ city | title }} &nbsp;·&nbsp; {{ kpis.total_listings }} listings analysed</p>
+</header>
+
+<div class="container">
+
+  <!-- KPI Summary -->
+  <h2>Market Overview</h2>
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="val">{{ kpis.total_listings }}</div><div class="lbl">Total Listings</div></div>
+    <div class="kpi-card"><div class="val">{{ kpis.price_median | inr }}</div><div class="lbl">Median Price</div></div>
+    <div class="kpi-card"><div class="val">{{ kpis.price_mean | inr }}</div><div class="lbl">Average Price</div></div>
+    <div class="kpi-card"><div class="val">{{ kpis.price_min | inr }}</div><div class="lbl">Lowest Price</div></div>
+    <div class="kpi-card"><div class="val">{{ kpis.price_max | inr }}</div><div class="lbl">Highest Price</div></div>
+  </div>
+
+  <!-- Charts -->
+  <h2>Price Analysis</h2>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h2>Price Distribution</h2>
+      <canvas id="chartDist"></canvas>
+    </div>
+    <div class="chart-card">
+      <h2>Median Price by Year</h2>
+      <canvas id="chartYear"></canvas>
+    </div>
+    <div class="chart-card">
+      <h2>Median Price by Fuel Type</h2>
+      <canvas id="chartFuel"></canvas>
+    </div>
+    <div class="chart-card">
+      <h2>Median Price by Transmission</h2>
+      <canvas id="chartTx"></canvas>
+    </div>
+  </div>
+
+  <!-- Top Deals -->
+  {% if top_deals %}
+  <h2>Top Recommended Listings</h2>
+  <div class="deals-grid">
+    {% for s in top_deals %}
+    <div class="deal-card">
+      <img src="{{ s.listing.image_url }}" alt="{{ s.listing.title }}" loading="lazy">
+      <div class="deal-body">
+        <div class="deal-title">{{ s.listing.title }}</div>
+        <div class="deal-price">{{ s.listing.price | inr }}</div>
+        <div class="deal-meta">
+          {{ s.listing.year or '—' }} &nbsp;·&nbsp;
+          {{ "{:,}".format(s.listing.km_driven) if s.listing.km_driven else '—' }} km &nbsp;·&nbsp;
+          {{ s.listing.fuel_type | title if s.listing.fuel_type else '—' }} &nbsp;·&nbsp;
+          {{ s.listing.transmission | title if s.listing.transmission else '—' }}
+          {% if s.listing.owners %} &nbsp;·&nbsp; {{ s.listing.owners }}{% if s.listing.owners == 1 %}st{% elif s.listing.owners == 2 %}nd{% elif s.listing.owners == 3 %}rd{% else %}th{% endif %} owner{% endif %}
+        </div>
+        <span class="verdict verdict-great">{{ s.verdict }}</span>
+        <span style="font-size:0.8rem;color:var(--muted);margin-left:6px;">Score: {{ s.score }}/100</span>
+        <ul class="reasons">
+          {% for r in s.reasons %}<li>{{ r }}</li>{% endfor %}
+        </ul>
+      </div>
+      <a class="deal-link" href="{{ s.listing.url }}" target="_blank">View on OLX →</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- All Listings Table -->
+  <h2>All Listings</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th><th>Price</th><th>Year</th><th>KM</th>
+        <th>Fuel</th><th>Transmission</th><th>Owners</th>
+        <th>Location</th><th>Score</th><th>Verdict</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in all_listings %}
+      <tr>
+        <td><a class="listing-link" href="{{ s.listing.url }}" target="_blank">{{ s.listing.title }}</a></td>
+        <td>{{ s.listing.price | inr }}</td>
+        <td>{{ s.listing.year or '—' }}</td>
+        <td>{{ "{:,}".format(s.listing.km_driven) if s.listing.km_driven else '—' }}</td>
+        <td>{{ s.listing.fuel_type | title if s.listing.fuel_type else '—' }}</td>
+        <td>{{ s.listing.transmission | title if s.listing.transmission else '—' }}</td>
+        <td>{{ s.listing.owners or '—' }}</td>
+        <td>{{ s.listing.location or '—' }}</td>
+        <td>
+          <span class="score-bar"><span class="score-fill" style="width:{{ s.score }}%"></span></span>
+          {{ s.score }}
+        </td>
+        <td>
+          {% if s.verdict == "Great Deal" %}<span class="verdict verdict-great">{{ s.verdict }}</span>
+          {% elif s.verdict == "Fair Price" %}<span class="verdict verdict-fair">{{ s.verdict }}</span>
+          {% else %}<span class="verdict verdict-over">{{ s.verdict }}</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</div>
+
+<script>
+const ACCENT = '#002f34';
+const GREEN  = '#23e5db';
+const chartDefaults = { responsive: true, plugins: { legend: { display: false } } };
+
+// Price Distribution Histogram
+(function() {
+  const prices = {{ chart_price_dist | safe }};
+  if (!prices.length) return;
+  const min = Math.min(...prices), max = Math.max(...prices);
+  const bins = 15;
+  const step = (max - min) / bins;
+  const labels = [], data = [];
+  for (let i = 0; i < bins; i++) {
+    const lo = min + i * step, hi = lo + step;
+    labels.push('₹' + Math.round(lo / 1e5) + 'L');
+    data.push(prices.filter(p => p >= lo && p < hi).length);
+  }
+  new Chart(document.getElementById('chartDist'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data, backgroundColor: ACCENT, borderRadius: 4 }] },
+    options: { ...chartDefaults, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+})();
+
+// Median Price by Year
+(function() {
+  const rows = {{ chart_by_year | safe }};
+  if (!rows.length) return;
+  new Chart(document.getElementById('chartYear'), {
+    type: 'line',
+    data: {
+      labels: rows.map(r => r.year),
+      datasets: [{
+        data: rows.map(r => r.median_price),
+        borderColor: ACCENT, backgroundColor: 'rgba(0,47,52,0.08)',
+        pointBackgroundColor: ACCENT, tension: 0.3, fill: true
+      }]
+    },
+    options: { ...chartDefaults, scales: { y: { ticks: { callback: v => '₹' + (v/1e5).toFixed(1) + 'L' } } } }
+  });
+})();
+
+// By Fuel
+(function() {
+  const rows = {{ chart_by_fuel | safe }};
+  if (!rows.length) return;
+  const colors = ['#002f34','#23e5db','#6b7280','#d97706','#7c3aed'];
+  new Chart(document.getElementById('chartFuel'), {
+    type: 'bar',
+    data: {
+      labels: rows.map(r => r.fuel_type.charAt(0).toUpperCase() + r.fuel_type.slice(1)),
+      datasets: [{ data: rows.map(r => r.median_price), backgroundColor: colors, borderRadius: 4 }]
+    },
+    options: { ...chartDefaults, scales: { y: { ticks: { callback: v => '₹' + (v/1e5).toFixed(1) + 'L' } } } }
+  });
+})();
+
+// By Transmission
+(function() {
+  const rows = {{ chart_by_transmission | safe }};
+  if (!rows.length) return;
+  new Chart(document.getElementById('chartTx'), {
+    type: 'doughnut',
+    data: {
+      labels: rows.map(r => r.transmission.charAt(0).toUpperCase() + r.transmission.slice(1) + ' (' + r.count + ')'),
+      datasets: [{ data: rows.map(r => r.median_price), backgroundColor: [ACCENT, GREEN, '#6b7280'] }]
+    },
+    options: { responsive: true, plugins: { legend: { display: true, position: 'bottom' } } }
+  });
+})();
+</script>
+</body>
+</html>
