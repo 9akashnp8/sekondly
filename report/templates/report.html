@@ -4,168 +4,968 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ query | title }} — Sekondly Report ({{ city | title }})</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #f5f5f5; --card: #fff; --accent: #002f34; --green: #23e5db;
-    --text: #1a1a1a; --muted: #666; --border: #e0e0e0;
-    --great: #16a34a; --fair: #d97706; --over: #dc2626;
+    --bg:            #f0f2f5;
+    --bg-subtle:     #f7f8fa;
+    --card:          #ffffff;
+    --accent:        #002f34;
+    --accent-mid:    #004247;
+    --accent-hover:  #005058;
+    --accent-light:  rgba(0,47,52,0.06);
+    --accent-light2: rgba(0,47,52,0.12);
+    --green:         #23e5db;
+    --green-dim:     rgba(35,229,219,0.15);
+    --text:          #0d1117;
+    --text-2:        #374151;
+    --muted:         #6b7280;
+    --muted-light:   #9ca3af;
+    --border:        #e5e7eb;
+    --border-strong: #d1d5db;
+    --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.05);
+    --radius:    12px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+    --great: #15803d; --great-bg: #dcfce7; --great-border: #bbf7d0;
+    --fair:  #b45309; --fair-bg:  #fef3c7; --fair-border:  #fde68a;
+    --over:  #b91c1c; --over-bg:  #fee2e2; --over-border:  #fecaca;
+    --font-display: 'Outfit', system-ui, sans-serif;
+    --font-body:    'IBM Plex Sans', system-ui, sans-serif;
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-         background: var(--bg); color: var(--text); line-height: 1.5; }
-  header { background: var(--accent); color: #fff; padding: 24px 32px; }
-  header h1 { font-size: 1.6rem; font-weight: 700; }
-  header p  { color: #a0c4c5; font-size: 0.9rem; margin-top: 4px; }
 
-  /* Filter bar */
-  .filter-bar { background: var(--card); border-bottom: 1px solid var(--border);
-                padding: 12px 32px; position: sticky; top: 0; z-index: 10;
-                box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
-  .filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-  .filter-row:last-child { margin-bottom: 0; }
-  .filter-label { font-size: 0.72rem; font-weight: 700; color: var(--muted);
-                  min-width: 96px; text-transform: uppercase; letter-spacing: 0.06em; }
-  .pill-group { display: flex; flex-wrap: wrap; gap: 5px; }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Header ──────────────────────────────────────────────────────────── */
+  header {
+    background: var(--accent);
+    background-image:
+      linear-gradient(135deg, #002f34 0%, #003d43 50%, #004c52 100%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2323e5db' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    color: #fff;
+    padding: 32px 40px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(35,229,219,0.4), transparent);
+  }
+
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .header-eyebrow {
+    font-family: var(--font-body);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 2px;
+    background: var(--green);
+    border-radius: 2px;
+  }
+
+  header h1 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: #fff;
+  }
+
+  .header-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .header-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.9);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+
+  .header-chip svg {
+    width: 12px; height: 12px;
+    stroke: var(--green); fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .header-sep { color: rgba(255,255,255,0.2); font-size: 1rem; }
+
+  .header-listings {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.82rem;
+  }
+
+  .header-listings strong {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .header-brand {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+  }
+
+  .header-right {
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .header-timestamp {
+    font-size: 0.74rem;
+    color: rgba(255,255,255,0.4);
+    line-height: 1.6;
+  }
+
+  /* ── Filter Bar ──────────────────────────────────────────────────────── */
+  .filter-bar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .filter-bar-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 12px 0;
+  }
+
+  .filter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 4px 0;
+  }
+
+  .filter-label {
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: var(--muted-light);
+    min-width: 88px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    flex-shrink: 0;
+  }
+
+  .pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex: 1;
+  }
+
   .pill { display: none; }
-  .pill + label { display: inline-block; padding: 3px 11px; border-radius: 20px;
-                  border: 1px solid var(--border); font-size: 0.78rem; font-weight: 500;
-                  cursor: pointer; background: #fff; color: var(--text);
-                  user-select: none; transition: background 0.12s, color 0.12s, border-color 0.12s; }
-  .pill:checked + label { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .pill + label:hover { border-color: var(--accent); }
-  .reset-btn { padding: 4px 14px; border: none; border-radius: 20px; background: var(--border);
-               color: var(--muted); font-size: 0.78rem; cursor: pointer; font-weight: 600;
-               transition: background 0.12s, color 0.12s; }
-  .reset-btn:hover { background: var(--accent); color: #fff; }
 
-  .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
-  h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--accent); }
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-              gap: 12px; margin-bottom: 32px; }
-  .kpi-card { background: var(--card); border-radius: 10px; padding: 20px 16px;
-              border: 1px solid var(--border); text-align: center; }
-  .kpi-card .val { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
-  .kpi-card .lbl { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
-  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
-  .chart-card { background: var(--card); border-radius: 10px; padding: 20px;
-                border: 1px solid var(--border); }
-  .chart-card canvas { max-height: 240px; }
-  .deals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                gap: 16px; margin-bottom: 32px; }
-  .deal-card { background: var(--card); border-radius: 10px; border: 1px solid var(--border);
-               overflow: hidden; display: flex; flex-direction: column; }
-  .deal-card img { width: 100%; height: 160px; object-fit: cover; background: #eee; }
-  .deal-body { padding: 14px; flex: 1; }
-  .deal-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; }
-  .deal-price { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
-  .deal-meta { font-size: 0.8rem; color: var(--muted); margin: 4px 0 10px; }
-  .verdict { display: inline-block; font-size: 0.75rem; font-weight: 700;
-             padding: 3px 10px; border-radius: 20px; margin-bottom: 8px; }
-  .verdict-great { background: #dcfce7; color: var(--great); }
-  .verdict-fair  { background: #fef3c7; color: var(--fair); }
-  .verdict-over  { background: #fee2e2; color: var(--over); }
-  .reasons { list-style: none; padding: 0; }
-  .reasons li { font-size: 0.78rem; color: var(--muted); padding: 2px 0; }
-  .reasons li::before { content: "· "; }
-  .deal-link { display: block; text-align: center; padding: 10px;
-               background: var(--accent); color: #fff; text-decoration: none;
-               font-size: 0.85rem; font-weight: 600; margin-top: auto; }
-  .deal-link:hover { background: #004f54; }
-  table { width: 100%; border-collapse: collapse; background: var(--card);
-          border-radius: 10px; overflow: hidden; border: 1px solid var(--border); font-size: 0.85rem; }
-  thead th { background: var(--accent); color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; }
-  tbody tr:nth-child(even) { background: #fafafa; }
-  tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .pill + label {
+    display: inline-block;
+    padding: 4px 13px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    font-size: 0.76rem;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--bg-subtle);
+    color: var(--text-2);
+    user-select: none;
+    transition: background 0.14s, color 0.14s, border-color 0.14s, box-shadow 0.14s;
+  }
+
+  .pill + label:hover {
+    border-color: var(--accent-mid);
+    color: var(--accent);
+    background: var(--accent-light);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+
+  .pill:checked + label {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: none;
+    font-weight: 600;
+  }
+
+  .filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .active-badge {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    background: var(--accent-light);
+    border: 1px solid var(--accent-light2);
+    border-radius: 20px;
+    padding: 3px 10px;
+    white-space: nowrap;
+  }
+
+  .active-badge .count {
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .reset-btn {
+    padding: 5px 16px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 20px;
+    background: #fff;
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-family: var(--font-body);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.14s;
+    white-space: nowrap;
+  }
+
+  .reset-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  /* ── Container ───────────────────────────────────────────────────────── */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 36px 20px 48px;
+  }
+
+  .section { margin-bottom: 40px; }
+
+  .section-hd {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+  }
+
+  .section-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 9px;
+  }
+
+  /* ── KPI Cards ───────────────────────────────────────────────────────── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+
+  .kpi-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 18px 16px 16px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px 0 0 3px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .kpi-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .kpi-card:hover::before { opacity: 1; }
+
+  .kpi-icon-wrap {
+    width: 30px; height: 30px;
+    border-radius: var(--radius-xs);
+    display: flex; align-items: center; justify-content: center;
+    background: var(--accent-light);
+    margin-bottom: 8px;
+  }
+
+  .kpi-icon-wrap svg {
+    width: 14px; height: 14px;
+    stroke: var(--accent); fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .kpi-val {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .kpi-lbl {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Charts ──────────────────────────────────────────────────────────── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .chart-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 20px 20px 16px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .chart-card h3 {
+    font-size: 0.67rem;
+    font-weight: 700;
+    color: var(--muted-light);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
+  }
+
+  .chart-card canvas { max-height: 220px; }
+
+  /* ── Deal Cards ──────────────────────────────────────────────────────── */
+  .deals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 16px;
+  }
+
+  .deal-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.22s cubic-bezier(.2,.8,.2,1), transform 0.22s cubic-bezier(.2,.8,.2,1), border-color 0.22s;
+  }
+
+  .deal-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+    border-color: var(--border-strong);
+  }
+
+  .deal-img-wrap {
+    position: relative;
+    height: 195px;
+    background: var(--bg);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .deal-img-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    transition: transform 0.4s cubic-bezier(.2,.8,.2,1);
+  }
+
+  .deal-card:hover .deal-img-wrap img { transform: scale(1.06); }
+
+  .deal-img-placeholder {
+    display: none;
+    width: 100%; height: 100%;
+    align-items: center; justify-content: center;
+    background: var(--bg);
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .deal-img-placeholder svg {
+    width: 40px; height: 40px;
+    stroke: var(--border-strong); fill: none;
+    stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .deal-img-placeholder span {
+    font-size: 0.7rem;
+    color: var(--muted-light);
+    letter-spacing: 0.05em;
+  }
+
+  .deal-body {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .deal-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+    line-height: 1.35;
+    color: var(--text);
+  }
+
+  .deal-variant {
+    font-size: 0.76rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .deal-price {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.03em;
+    margin-top: 2px;
+  }
+
+  .deal-meta {
+    font-size: 0.78rem;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0;
+    margin-top: 1px;
+  }
+
+  .deal-meta-dot {
+    margin: 0 5px;
+    color: var(--border-strong);
+  }
+
+  .deal-tags {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  .deal-score-text {
+    font-size: 0.74rem;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .deal-score-text strong {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .deal-reasons {
+    margin-top: 6px;
+    flex: 1;
+  }
+
+  .reasons {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .reasons li {
+    font-size: 0.74rem;
+    color: var(--muted);
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    line-height: 1.4;
+  }
+
+  .reasons li::before {
+    content: "→";
+    font-size: 0.65rem;
+    color: var(--muted-light);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .deal-footer {
+    padding: 0 16px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .deal-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 18px;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    transition: background 0.14s, transform 0.1s;
+    white-space: nowrap;
+  }
+
+  .deal-link:hover { background: var(--accent-hover); transform: translateX(1px); }
+
+  .deal-link svg {
+    width: 12px; height: 12px;
+    fill: none; stroke: #fff;
+    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  /* ── Verdict Badges ──────────────────────────────────────────────────── */
+  .verdict {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+
+  .verdict-great { background: var(--great-bg); color: var(--great); border: 1px solid var(--great-border); }
+  .verdict-fair  { background: var(--fair-bg);  color: var(--fair);  border: 1px solid var(--fair-border); }
+  .verdict-over  { background: var(--over-bg);  color: var(--over);  border: 1px solid var(--over-border); }
+
+  /* ── Table ───────────────────────────────────────────────────────────── */
+  .table-scroll {
+    overflow-x: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+    font-size: 0.82rem;
+    min-width: 800px;
+  }
+
+  thead th {
+    background: var(--accent);
+    color: rgba(255,255,255,0.9);
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.14s;
+    position: relative;
+  }
+
+  thead th:hover { background: var(--accent-mid); }
+
+  .sort-icon {
+    display: inline-block;
+    margin-left: 5px;
+    font-size: 0.62rem;
+    opacity: 0.45;
+    vertical-align: middle;
+  }
+
+  thead th.sort-asc  .sort-icon { opacity: 1; }
+  thead th.sort-asc  .sort-icon::after { content: '▲'; }
+  thead th.sort-desc .sort-icon { opacity: 1; }
+  thead th.sort-desc .sort-icon::after { content: '▼'; }
+  thead th:not(.sort-asc):not(.sort-desc) .sort-icon::after { content: '⇅'; }
+
+  tbody tr { transition: background 0.1s; }
+  tbody tr:nth-child(even) { background: var(--bg-subtle); }
+  tbody tr:hover { background: var(--accent-light); }
+
+  tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+    color: var(--text-2);
+  }
+
   tbody tr:last-child td { border-bottom: none; }
-  .score-bar { background: #e5e7eb; border-radius: 4px; height: 6px; width: 80px; display: inline-block; vertical-align: middle; margin-right: 6px; }
-  .score-fill { height: 100%; border-radius: 4px; background: var(--accent); }
-  a.listing-link { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+  .score-bar {
+    background: #e5e7eb;
+    border-radius: 3px;
+    height: 4px;
+    width: 52px;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+
+  .score-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--accent);
+  }
+
+  .score-num {
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 0.8rem;
+  }
+
+  a.listing-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.82rem;
+  }
+
   a.listing-link:hover { text-decoration: underline; }
-  .empty-msg { text-align: center; color: var(--muted); padding: 32px; font-size: 0.9rem; }
-  @media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
+
+  .empty-msg {
+    text-align: center;
+    color: var(--muted);
+    padding: 48px;
+    font-size: 0.88rem;
+  }
+
+  /* ── Footer ──────────────────────────────────────────────────────────── */
+  footer {
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    padding: 20px 40px;
+    text-align: center;
+    font-size: 0.74rem;
+    color: var(--muted);
+  }
+
+  footer .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  footer strong { color: var(--accent); font-weight: 700; }
+  footer .footer-dot { opacity: 0.3; }
+
+  /* ── Responsive: Tablet (≤1024px) ───────────────────────────────────── */
+  @media (max-width: 1024px) {
+    header          { padding: 24px 28px 22px; }
+    .filter-bar     { padding: 0 28px; }
+    .container      { padding: 28px 18px 40px; }
+    .kpi-grid       { grid-template-columns: repeat(3, 1fr); }
+    .charts-grid    { grid-template-columns: 1fr 1fr; }
+    .header-right   { display: none; }
+  }
+
+  /* ── Responsive: Large phone (≤768px) ───────────────────────────────── */
+  @media (max-width: 768px) {
+    header          { padding: 20px 20px 18px; }
+    header h1       { font-size: 1.55rem; }
+    .filter-bar     { padding: 0 20px; }
+    .filter-label   { min-width: 72px; font-size: 0.62rem; }
+    .container      { padding: 22px 14px 36px; }
+    .kpi-grid       { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .charts-grid    { grid-template-columns: 1fr; }
+    .deals-grid     { grid-template-columns: 1fr; }
+    .filter-actions { flex-wrap: wrap; }
+  }
+
+  /* ── Responsive: Small phone (≤480px) ───────────────────────────────── */
+  @media (max-width: 480px) {
+    header          { padding: 16px 16px 14px; }
+    header h1       { font-size: 1.3rem; }
+    .header-eyebrow { font-size: 0.62rem; }
+    .filter-bar     { padding: 0 14px; }
+    .filter-label   { min-width: 60px; }
+    .container      { padding: 18px 12px 32px; }
+    .kpi-grid       { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kpi-val        { font-size: 1.25rem; }
+    footer          { padding: 16px; }
+  }
 </style>
 </head>
 <body>
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
 <header>
-  <h1>{{ query | title }} — Market Report</h1>
-  <p>{{ city | title }} &nbsp;·&nbsp; <span id="headerCount">{{ kpis.total_listings }}</span> listings analysed &nbsp;·&nbsp; <span style="opacity:0.5;font-size:0.8rem">Sekondly</span></p>
+  <div class="header-inner">
+    <div class="header-main">
+      <div class="header-eyebrow">Market Intelligence Report</div>
+      <h1>{{ query | title }}</h1>
+      <div class="header-meta">
+        <span class="header-chip">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          {{ city | title }}
+        </span>
+        <span class="header-sep">·</span>
+        <span class="header-listings"><strong id="headerCount">{{ kpis.total_listings }}</strong> listings analysed</span>
+        <span class="header-sep">·</span>
+        <span class="header-brand">Sekondly</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-timestamp" id="reportTimestamp"></div>
+    </div>
+  </div>
 </header>
 
-<!-- Filter Bar -->
+<!-- ── Filter Bar ──────────────────────────────────────────────────────────── -->
 <div class="filter-bar">
-  <div class="filter-row">
-    <span class="filter-label">Year</span>
-    <div class="pill-group" id="pillsYear"></div>
-  </div>
-  <div class="filter-row">
-    <span class="filter-label">Fuel</span>
-    <div class="pill-group" id="pillsFuel"></div>
-  </div>
-  <div class="filter-row">
-    <span class="filter-label">Transmission</span>
-    <div class="pill-group" id="pillsTx"></div>
-  </div>
-  <div class="filter-row">
-    <span class="filter-label">Variant</span>
-    <div class="pill-group" id="pillsVariant"></div>
-    <button class="reset-btn" onclick="resetFilters()">Reset Filters</button>
+  <div class="filter-bar-inner">
+    <div class="filter-row">
+      <span class="filter-label">Year</span>
+      <div class="pill-group" id="pillsYear"></div>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Fuel</span>
+      <div class="pill-group" id="pillsFuel"></div>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Transmission</span>
+      <div class="pill-group" id="pillsTx"></div>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Variant</span>
+      <div class="pill-group" id="pillsVariant"></div>
+      <div class="filter-actions">
+        <span class="active-badge" id="activeBadge">
+          <span class="count" id="activeCount">0</span> filter<span id="activePlural">s</span> active
+        </span>
+        <button class="reset-btn" onclick="resetFilters()">Reset</button>
+      </div>
+    </div>
   </div>
 </div>
 
+<!-- ── Main ────────────────────────────────────────────────────────────────── -->
 <div class="container">
 
   <!-- KPI Summary -->
-  <h2>Market Overview</h2>
-  <div class="kpi-grid">
-    <div class="kpi-card"><div class="val" id="kpiCount">{{ kpis.total_listings }}</div><div class="lbl">Total Listings</div></div>
-    <div class="kpi-card"><div class="val" id="kpiMedian">{{ kpis.price_median | inr }}</div><div class="lbl">Median Price</div></div>
-    <div class="kpi-card"><div class="val" id="kpiMean">{{ kpis.price_mean | inr }}</div><div class="lbl">Average Price</div></div>
-    <div class="kpi-card"><div class="val" id="kpiMin">{{ kpis.price_min | inr }}</div><div class="lbl">Lowest Price</div></div>
-    <div class="kpi-card"><div class="val" id="kpiMax">{{ kpis.price_max | inr }}</div><div class="lbl">Highest Price</div></div>
+  <div class="section">
+    <div class="section-hd">
+      <span class="section-title">Market Overview</span>
+    </div>
+    <div class="kpi-grid">
+
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </div>
+        <div class="kpi-val" id="kpiCount">{{ kpis.total_listings }}</div>
+        <div class="kpi-lbl">Listings</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+        </div>
+        <div class="kpi-val" id="kpiMedian">{{ kpis.price_median | inr }}</div>
+        <div class="kpi-lbl">Median Price</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap">
+          <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        </div>
+        <div class="kpi-val" id="kpiMean">{{ kpis.price_mean | inr }}</div>
+        <div class="kpi-lbl">Average Price</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+        </div>
+        <div class="kpi-val" id="kpiMin">{{ kpis.price_min | inr }}</div>
+        <div class="kpi-lbl">Lowest Price</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </div>
+        <div class="kpi-val" id="kpiMax">{{ kpis.price_max | inr }}</div>
+        <div class="kpi-lbl">Highest Price</div>
+      </div>
+
+    </div>
   </div>
 
   <!-- Charts -->
-  <h2>Price Analysis</h2>
-  <div class="charts-grid">
-    <div class="chart-card">
-      <h2>Price Distribution</h2>
-      <canvas id="chartDist"></canvas>
+  <div class="section">
+    <div class="section-hd">
+      <span class="section-title">Price Analysis</span>
     </div>
-    <div class="chart-card">
-      <h2>Median Price by Year</h2>
-      <canvas id="chartYear"></canvas>
-    </div>
-    <div class="chart-card">
-      <h2>Median Price by Fuel Type</h2>
-      <canvas id="chartFuel"></canvas>
-    </div>
-    <div class="chart-card">
-      <h2>Median Price by Transmission</h2>
-      <canvas id="chartTx"></canvas>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Price Distribution</h3>
+        <canvas id="chartDist"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Median Price by Year</h3>
+        <canvas id="chartYear"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Median Price by Fuel Type</h3>
+        <canvas id="chartFuel"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Median Price by Transmission</h3>
+        <canvas id="chartTx"></canvas>
+      </div>
     </div>
   </div>
 
   <!-- Top Deals -->
-  <div id="dealsSection">
-    <h2>Top Recommended Listings</h2>
+  <div id="dealsSection" class="section">
+    <div class="section-hd">
+      <span class="section-title">Top Recommended Listings</span>
+      <span class="section-badge" id="dealsCountBadge"></span>
+    </div>
     <div class="deals-grid" id="dealsGrid"></div>
   </div>
 
   <!-- All Listings Table -->
-  <h2>All Listings</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Title</th><th>Variant</th><th>Price</th><th>Year</th><th>KM</th>
-        <th>Fuel</th><th>Transmission</th><th>Owners</th>
-        <th>Location</th><th>Score</th><th>Verdict</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
+  <div class="section">
+    <div class="section-hd">
+      <span class="section-title">All Listings</span>
+      <span class="section-badge" id="tableCountBadge"></span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="onSortHeader(0)">Title<span class="sort-icon"></span></th>
+            <th onclick="onSortHeader(1)">Variant<span class="sort-icon"></span></th>
+            <th onclick="onSortHeader(2)">Price<span class="sort-icon"></span></th>
+            <th onclick="onSortHeader(3)">Year<span class="sort-icon"></span></th>
+            <th onclick="onSortHeader(4)">KM<span class="sort-icon"></span></th>
+            <th onclick="onSortHeader(5)">Fuel<span class="sort-icon"></span></th>
+            <th onclick="onSortHeader(6)">Transmission<span class="sort-icon"></span></th>
+            <th onclick="onSortHeader(7)">Owners<span class="sort-icon"></span></th>
+            <th onclick="onSortHeader(8)">Location<span class="sort-icon"></span></th>
+            <th onclick="onSortHeader(9)">Score<span class="sort-icon"></span></th>
+            <th onclick="onSortHeader(10)">Verdict<span class="sort-icon"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
 
 </div>
+
+<!-- ── Footer ──────────────────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-inner">
+    <span>Generated by <strong>Sekondly</strong></span>
+    <span class="footer-dot">·</span>
+    <span id="footerTimestamp"></span>
+    <span class="footer-dot">·</span>
+    <span>Data sourced from OLX.in</span>
+  </div>
+</footer>
 
 <script>
 const ALL_LISTINGS = {{ all_listings_json | safe }};
@@ -174,19 +974,21 @@ const GREEN  = '#23e5db';
 
 let activeFilters = { year: new Set(), fuel: new Set(), transmission: new Set(), variant: new Set() };
 let chartInstances = {};
+let currentFiltered = [];
+const COL_KEYS = ['title','variant','price','year','km_driven','fuel_type','transmission','owners','location','score','verdict'];
+let sortState = { colIdx: null, dir: 'asc' };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function median(arr) {
   if (!arr.length) return 0;
-  const sorted = [...arr].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  const s = [...arr].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
 function mean(arr) {
-  if (!arr.length) return 0;
-  return arr.reduce((s, v) => s + v, 0) / arr.length;
+  return arr.length ? arr.reduce((s, v) => s + v, 0) / arr.length : 0;
 }
 
 function groupBy(arr, key) {
@@ -227,11 +1029,7 @@ function histogramBins(prices, n) {
 
 function escHtml(s) {
   if (s == null) return '';
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function cap(s) {
@@ -249,6 +1047,23 @@ function verdictClass(v) {
   return 'verdict-over';
 }
 
+// ── Active filter badge ───────────────────────────────────────────────────────
+
+function updateActiveBadge() {
+  const total = activeFilters.year.size + activeFilters.fuel.size +
+                activeFilters.transmission.size + activeFilters.variant.size;
+  const badge = document.getElementById('activeBadge');
+  const count = document.getElementById('activeCount');
+  const plural = document.getElementById('activePlural');
+  if (total > 0) {
+    count.textContent = total;
+    plural.textContent = total === 1 ? '' : 's';
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
 // ── Filter logic ──────────────────────────────────────────────────────────────
 
 function applyFilters() {
@@ -259,17 +1074,17 @@ function applyFilters() {
     if (activeFilters.variant.size > 0 && !activeFilters.variant.has(l.variant || '')) return false;
     return true;
   });
+  currentFiltered = filtered;
 
   const prices = filtered.map(l => l.price).filter(p => p > 0);
-
-  // Update KPI cards
-  document.getElementById('kpiCount').textContent = filtered.length;
+  document.getElementById('kpiCount').textContent    = filtered.length;
   document.getElementById('headerCount').textContent = filtered.length;
-  document.getElementById('kpiMedian').textContent = formatInr(median(prices));
-  document.getElementById('kpiMean').textContent = formatInr(mean(prices));
-  document.getElementById('kpiMin').textContent = prices.length ? formatInr(Math.min(...prices)) : 'N/A';
-  document.getElementById('kpiMax').textContent = prices.length ? formatInr(Math.max(...prices)) : 'N/A';
+  document.getElementById('kpiMedian').textContent   = formatInr(median(prices));
+  document.getElementById('kpiMean').textContent     = formatInr(mean(prices));
+  document.getElementById('kpiMin').textContent      = prices.length ? formatInr(Math.min(...prices)) : 'N/A';
+  document.getElementById('kpiMax').textContent      = prices.length ? formatInr(Math.max(...prices)) : 'N/A';
 
+  updateActiveBadge();
   renderCharts(filtered, prices);
   renderDeals(filtered);
   renderTable(filtered);
@@ -287,25 +1102,51 @@ function resetFilters() {
   applyFilters();
 }
 
+// ── Sort ──────────────────────────────────────────────────────────────────────
+
+function sortData(data) {
+  if (sortState.colIdx === null) return data;
+  const key = COL_KEYS[sortState.colIdx];
+  const dir = sortState.dir === 'asc' ? 1 : -1;
+  return [...data].sort((a, b) => {
+    let va = a[key], vb = b[key];
+    if (va == null || va === '') return 1;
+    if (vb == null || vb === '') return -1;
+    if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * dir;
+    return String(va).localeCompare(String(vb)) * dir;
+  });
+}
+
+function onSortHeader(colIdx) {
+  if (sortState.colIdx === colIdx) {
+    sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortState.colIdx = colIdx;
+    sortState.dir = 'asc';
+  }
+  document.querySelectorAll('thead th').forEach((th, i) => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (i === colIdx) th.classList.add(sortState.dir === 'asc' ? 'sort-asc' : 'sort-desc');
+  });
+  renderTable(currentFiltered);
+}
+
 // ── Charts ────────────────────────────────────────────────────────────────────
 
 function renderCharts(filtered, prices) {
-  const chartDefaults = { responsive: true, plugins: { legend: { display: false } } };
-
+  const base = { responsive: true, plugins: { legend: { display: false } } };
   Object.values(chartInstances).forEach(c => c.destroy());
   chartInstances = {};
 
-  // Price Distribution
   const dist = histogramBins(prices);
   if (dist.labels.length) {
     chartInstances.dist = new Chart(document.getElementById('chartDist'), {
       type: 'bar',
       data: { labels: dist.labels, datasets: [{ data: dist.data, backgroundColor: ACCENT, borderRadius: 4 }] },
-      options: { ...chartDefaults, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+      options: { ...base, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
     });
   }
 
-  // By Year
   const byYear = groupBy(filtered.filter(l => l.year), 'year');
   const yearKeys = Object.keys(byYear).filter(k => k !== 'Unknown').sort((a, b) => Number(a) - Number(b));
   if (yearKeys.length) {
@@ -315,15 +1156,14 @@ function renderCharts(filtered, prices) {
         labels: yearKeys,
         datasets: [{
           data: yearKeys.map(k => median(byYear[k].map(l => l.price))),
-          borderColor: ACCENT, backgroundColor: 'rgba(0,47,52,0.08)',
-          pointBackgroundColor: ACCENT, tension: 0.3, fill: true
+          borderColor: ACCENT, backgroundColor: 'rgba(0,47,52,0.07)',
+          pointBackgroundColor: ACCENT, tension: 0.35, fill: true
         }]
       },
-      options: { ...chartDefaults, scales: { y: { ticks: { callback: v => '₹' + (v / 1e5).toFixed(1) + 'L' } } } }
+      options: { ...base, scales: { y: { ticks: { callback: v => '₹' + (v / 1e5).toFixed(1) + 'L' } } } }
     });
   }
 
-  // By Fuel
   const byFuel = groupBy(filtered.filter(l => l.fuel_type), 'fuel_type');
   const fuelKeys = Object.keys(byFuel).filter(k => k !== 'Unknown').sort();
   const fuelColors = ['#002f34', '#23e5db', '#6b7280', '#d97706', '#7c3aed'];
@@ -334,11 +1174,10 @@ function renderCharts(filtered, prices) {
         labels: fuelKeys.map(cap),
         datasets: [{ data: fuelKeys.map(k => median(byFuel[k].map(l => l.price))), backgroundColor: fuelColors, borderRadius: 4 }]
       },
-      options: { ...chartDefaults, scales: { y: { ticks: { callback: v => '₹' + (v / 1e5).toFixed(1) + 'L' } } } }
+      options: { ...base, scales: { y: { ticks: { callback: v => '₹' + (v / 1e5).toFixed(1) + 'L' } } } }
     });
   }
 
-  // By Transmission
   const byTx = groupBy(filtered.filter(l => l.transmission), 'transmission');
   const txKeys = Object.keys(byTx).filter(k => k !== 'Unknown').sort();
   if (txKeys.length) {
@@ -353,49 +1192,68 @@ function renderCharts(filtered, prices) {
   }
 }
 
-// ── Deals ─────────────────────────────────────────────────────────────────────
+// ── Deal Cards ────────────────────────────────────────────────────────────────
 
 function renderDeals(filtered) {
   const deals = filtered.filter(l => l.verdict === 'Great Deal').slice(0, 10);
   const section = document.getElementById('dealsSection');
-  const grid = document.getElementById('dealsGrid');
+  const grid    = document.getElementById('dealsGrid');
+  const badge   = document.getElementById('dealsCountBadge');
   if (!deals.length) { section.style.display = 'none'; return; }
   section.style.display = '';
-  grid.innerHTML = deals.map(l => `
+  badge.textContent = deals.length + (deals.length === 1 ? ' great deal' : ' great deals');
+
+  grid.innerHTML = deals.map(l => {
+    const hasImg = !!l.image_url;
+    return `
     <div class="deal-card">
-      <img src="${escHtml(l.image_url || '')}" alt="${escHtml(l.title)}" loading="lazy">
+      <div class="deal-img-wrap">
+        ${hasImg ? `<img src="${escHtml(l.image_url)}" alt="${escHtml(l.title)}" loading="lazy"
+          onerror="this.style.display='none';this.parentNode.querySelector('.deal-img-placeholder').style.display='flex'">` : ''}
+        <div class="deal-img-placeholder" style="${hasImg ? '' : 'display:flex'}">
+          <svg viewBox="0 0 24 24"><path d="M5 17H3a2 2 0 01-2-2V9a2 2 0 012-2h1l2-4h12l2 4h1a2 2 0 012 2v6a2 2 0 01-2 2h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+          <span>No image</span>
+        </div>
+      </div>
       <div class="deal-body">
         <div class="deal-title">${escHtml(l.title)}</div>
-        ${l.variant ? `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">${escHtml(l.variant)}</div>` : ''}
+        ${l.variant ? `<div class="deal-variant">${escHtml(l.variant)}</div>` : ''}
         <div class="deal-price">${formatInr(l.price)}</div>
         <div class="deal-meta">
-          ${l.year || '—'} &nbsp;·&nbsp;
-          ${l.km_driven ? l.km_driven.toLocaleString('en-IN') + ' km' : '—'} &nbsp;·&nbsp;
-          ${cap(l.fuel_type)} &nbsp;·&nbsp; ${cap(l.transmission)}
-          ${l.owners ? ' &nbsp;·&nbsp; ' + l.owners + ownerSuffix(l.owners) + ' owner' : ''}
+          ${l.year || '—'}<span class="deal-meta-dot">·</span>${l.km_driven ? l.km_driven.toLocaleString('en-IN') + ' km' : '—'}<span class="deal-meta-dot">·</span>${cap(l.fuel_type)}<span class="deal-meta-dot">·</span>${cap(l.transmission)}${l.owners ? '<span class="deal-meta-dot">·</span>' + l.owners + ownerSuffix(l.owners) + ' owner' : ''}
         </div>
-        <span class="verdict ${verdictClass(l.verdict)}">${escHtml(l.verdict)}</span>
-        <span style="font-size:0.8rem;color:var(--muted);margin-left:6px;">Score: ${l.score}/100</span>
-        <ul class="reasons">${(l.reasons || []).map(r => '<li>' + escHtml(r) + '</li>').join('')}</ul>
+        <div class="deal-tags">
+          <span class="verdict ${verdictClass(l.verdict)}">${escHtml(l.verdict)}</span>
+          <span class="deal-score-text">Score: <strong>${l.score}/100</strong></span>
+        </div>
+        ${(l.reasons && l.reasons.length) ? `<div class="deal-reasons"><ul class="reasons">${l.reasons.map(r => '<li>' + escHtml(r) + '</li>').join('')}</ul></div>` : ''}
       </div>
-      <a class="deal-link" href="${escHtml(l.url)}" target="_blank">View on OLX →</a>
-    </div>
-  `).join('');
+      <div class="deal-footer">
+        <a class="deal-link" href="${escHtml(l.url)}" target="_blank">
+          View on OLX
+          <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── Table ─────────────────────────────────────────────────────────────────────
 
 function renderTable(filtered) {
   const tbody = document.getElementById('tableBody');
+  const badge = document.getElementById('tableCountBadge');
+  badge.textContent = filtered.length + (filtered.length === 1 ? ' listing' : ' listings');
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="11" class="empty-msg">No listings match the selected filters.</td></tr>';
     return;
   }
-  tbody.innerHTML = filtered.map(l => `
+  const rows = sortData(filtered);
+  tbody.innerHTML = rows.map(l => `
     <tr>
       <td><a class="listing-link" href="${escHtml(l.url)}" target="_blank">${escHtml(l.title)}</a></td>
       <td>${escHtml(l.variant || '—')}</td>
-      <td>${formatInr(l.price)}</td>
+      <td style="font-weight:600;color:var(--accent)">${formatInr(l.price)}</td>
       <td>${l.year || '—'}</td>
       <td>${l.km_driven ? l.km_driven.toLocaleString('en-IN') : '—'}</td>
       <td>${cap(l.fuel_type)}</td>
@@ -403,8 +1261,7 @@ function renderTable(filtered) {
       <td>${l.owners || '—'}</td>
       <td>${escHtml(l.location || '—')}</td>
       <td>
-        <span class="score-bar"><span class="score-fill" style="width:${l.score}%"></span></span>
-        ${l.score}
+        <span class="score-bar"><span class="score-fill" style="width:${l.score}%"></span></span><span class="score-num">${l.score}</span>
       </td>
       <td><span class="verdict ${verdictClass(l.verdict)}">${escHtml(l.verdict)}</span></td>
     </tr>
@@ -414,8 +1271,8 @@ function renderTable(filtered) {
 // ── Build filter pills ────────────────────────────────────────────────────────
 
 function buildPills() {
-  const years = [...new Set(ALL_LISTINGS.map(l => l.year).filter(y => y != null))].sort((a, b) => a - b);
-  const fuels = [...new Set(ALL_LISTINGS.map(l => (l.fuel_type || '').toLowerCase()).filter(Boolean))].sort();
+  const years    = [...new Set(ALL_LISTINGS.map(l => l.year).filter(y => y != null))].sort((a, b) => a - b);
+  const fuels    = [...new Set(ALL_LISTINGS.map(l => (l.fuel_type || '').toLowerCase()).filter(Boolean))].sort();
   const txs      = [...new Set(ALL_LISTINGS.map(l => (l.transmission || '').toLowerCase()).filter(Boolean))].sort();
   const variants = [...new Set(ALL_LISTINGS.map(l => l.variant).filter(Boolean))].sort();
 
@@ -432,6 +1289,20 @@ function buildPills() {
   makePills('pillsTx',      txs,      'transmission');
   makePills('pillsVariant', variants, 'variant');
 }
+
+// ── Timestamp ─────────────────────────────────────────────────────────────────
+
+(function() {
+  const now = new Date();
+  const fmt = now.toLocaleString('en-IN', {
+    day: 'numeric', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+  const ts1 = document.getElementById('reportTimestamp');
+  const ts2 = document.getElementById('footerTimestamp');
+  if (ts1) ts1.innerHTML = 'Generated<br>' + fmt;
+  if (ts2) ts2.textContent = fmt;
+})();
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
