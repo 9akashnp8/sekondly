@@ -1,9 +1,18 @@
+from dataclasses import dataclass
+
 import aiohttp
 
 OLX_LOCATION_API = "https://www.olx.in/api/locations/autocomplete"
 
 
-async def resolve_location(city: str) -> tuple[str, int]:
+@dataclass
+class LocationResult:
+    slug: str
+    id: int
+    display_name: str
+
+
+async def resolve_location(city: str) -> LocationResult:
     """
     Return (slug, id) for the best match city, e.g. ("kochi", 4058873).
     Raises ValueError if no match found.
@@ -21,7 +30,7 @@ async def resolve_location(city: str) -> tuple[str, int]:
     # Prefer CITY type, fall back to first result
     match = next((s for s in suggestions if s.get("type") == "CITY"), suggestions[0])
     slug = match["name"].lower().replace(" ", "-")
-    return slug, match["id"]
+    return LocationResult(slug=slug, id=match["id"], display_name=match["name"])
 
 
 def build_search_url(location_slug: str, location_id: int, query: str) -> str:
