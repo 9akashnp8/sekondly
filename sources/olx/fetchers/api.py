@@ -10,6 +10,7 @@ from sources.olx.location import resolve_location
 
 OLX_SEARCH_API = "https://www.olx.in/api/relevance/v4/search"
 CARS_CATEGORY_ID = 84
+PAGE_SIZE = 40
 
 
 class OlxApiFetcher(BaseFetcher):
@@ -21,14 +22,26 @@ class OlxApiFetcher(BaseFetcher):
     def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
             self._session = aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30),
                 headers={
+                    # Mimic headers Chrome sends for a same-origin XHR from www.olx.in
                     "User-Agent": (
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                         "AppleWebKit/537.36 (KHTML, like Gecko) "
                         "Chrome/124.0.0.0 Safari/537.36"
                     ),
-                    "Accept": "application/json",
-                    "Accept-Language": "en-IN,en;q=0.9",
+                    "Accept": "application/json, text/plain, */*",
+                    "Accept-Language": "en-IN,en-US;q=0.9,en;q=0.8",
+                    "Accept-Encoding": "gzip, deflate",
+                    "Referer": "https://www.olx.in/",
+                    "Origin": "https://www.olx.in",
+                    "Sec-Fetch-Dest": "empty",
+                    "Sec-Fetch-Mode": "cors",
+                    "Sec-Fetch-Site": "same-origin",
+                    "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": '"Windows"',
+                    "Connection": "keep-alive",
                 }
             )
         return self._session
@@ -42,12 +55,20 @@ class OlxApiFetcher(BaseFetcher):
         listings: list[Listing] = []
         seen_ids: set[str] = set()
 
-        for page_num in range(1, max_pages + 1):
+        for page_num in range(0, max_pages + 1):
             params = {
-                "location_id": location.id,
-                "keywords": query,
-                "category_id": CARS_CATEGORY_ID,
+                "category": CARS_CATEGORY_ID,
+                "facet_limit": 1000,
+                "lang": "en-IN",
+                "location": location.id,
+                "location_facet_limit": 40,
                 "page": page_num,
+                "platform": "web-desktop",
+                "pttEnabled": "true",
+                "query": query,
+                "relaxedFilters": "true",
+                "size": PAGE_SIZE,
+                "spellcheck": "true",
             }
             print(f"  API page {page_num}...")
             try:
@@ -58,7 +79,7 @@ class OlxApiFetcher(BaseFetcher):
                 print(f"  Warning: API request failed on page {page_num}: {e}")
                 break
 
-            ads = data.get("data", {}).get("ads", [])
+            ads = data.get("data", [])
             if not ads:
                 print(f"  No more ads on page {page_num}, stopping.")
                 break
@@ -73,8 +94,8 @@ class OlxApiFetcher(BaseFetcher):
 
             print(f"  Page {page_num}: {new_count} new listings (total: {len(listings)})")
 
-            # Stop if no next page signal
-            if not data.get("data", {}).get("next_page"):
+            # Stop if API signals no more results or last page returned fewer than a full page
+            if data.get("empty") or len(ads) < PAGE_SIZE:
                 break
 
         return listings
@@ -102,32 +123,40 @@ def _parse_ad(ad: dict) -> Listing | None:
         if not url.startswith("http"):
             url = f"https://www.olx.in{url}"
 
-        title = ad.get("title", "")
+        title = ad.get("title", "").split(",")
+        if title:
+            title = title[0].strip()  # remove year and fuel from title if present
 
-        # Price: {"value": {"raw": 500000, "display": "₹5,00,000"}}
+        # Price: {"value": {"raw": 2050000.0, ...}}
         price_raw = ad.get("price", {}).get("value", {}).get("raw")
         price = int(price_raw) if price_raw is not None else None
 
-        # Location
-        location = ad.get("location", {}).get("name", "")
+        # Location: use most specific available level from locations_resolved
+        loc = ad.get("locations_resolved", {})
+        location = (
+            loc.get("SUBLOCALITY_LEVEL_1_name")
+            or loc.get("ADMIN_LEVEL_3_name")
+            or loc.get("ADMIN_LEVEL_1_name")
+            or ""
+        )
 
-        # Main image
-        photos = ad.get("photos", [])
-        image_url = photos[0].get("link", "") if photos else ""
+        # Main image: images[0].url
+        images = ad.get("images", [])
+        image_url = images[0].get("url", "") if images else ""
 
-        # Dates
-        activation_date_str = ad.get("activation_date", "")
-        posted_date = _parse_iso_date(activation_date_str)
+        # Posted date
+        posted_date = _parse_iso_date(ad.get("created_at", ""))
 
-        # Parse params list for year, km_driven, fuel, transmission, owners
-        params = {p["key"]: p.get("value", {}).get("label", "") for p in ad.get("params", [])}
+        # Parameters: index by key_name for stable lookup (the "key" field for fuel
+        # is the fuel value itself, e.g. "petrol", not a stable field name)
+        params = {p["key_name"]: p.get("value_name", "") for p in ad.get("parameters", [])}
 
-        year = _safe_int(params.get("year") or params.get("model_year"))
-        km_driven = _parse_km(params.get("mileage") or params.get("km_driven", ""))
-        fuel_type = (params.get("fuel_type") or params.get("fuel", "")).lower() or None
-        transmission = (params.get("transmission", "")).lower() or None
-        owners = _parse_owners(params.get("no_of_owners") or params.get("owners", ""))
-        variant = params.get("variant") or None
+        year = _safe_int(params.get("Year"))
+        km_driven = _parse_km(params.get("KM driven", ""))
+        fuel_type = params.get("Fuel", "").lower() or None
+        transmission = params.get("Transmission", "").lower() or None
+        owners = _parse_owners(params.get("No. of Owners", ""))
+        variant = params.get("Variant") or None
 
         return Listing(
             listing_id=listing_id,
@@ -137,7 +166,7 @@ def _parse_ad(ad: dict) -> Listing | None:
             price=price,
             year=year,
             km_driven=km_driven,
-            fuel_type=fuel_type or "api",  # marks as complete
+            fuel_type=fuel_type or "api",  # marks listing as complete for cache
             transmission=transmission,
             owners=owners,
             variant=variant,
