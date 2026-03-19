@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -38,6 +38,33 @@
     --over:  #b91c1c; --over-bg:  #fee2e2; --over-border:  #fecaca;
     --font-display: 'Outfit', system-ui, sans-serif;
     --font-body:    'IBM Plex Sans', system-ui, sans-serif;
+  }
+
+  /* ── Dark Theme ──────────────────────────────────────────────────────────── */
+  [data-theme="dark"] {
+    --bg:            #0f1117;
+    --bg-subtle:     #161b27;
+    --card:          #1a1f2e;
+    --accent:        #23e5db;
+    --accent-mid:    #1dd6cc;
+    --accent-hover:  #17c4bb;
+    --accent-light:  rgba(35,229,219,0.08);
+    --accent-light2: rgba(35,229,219,0.16);
+    --green:         #23e5db;
+    --green-dim:     rgba(35,229,219,0.12);
+    --text:          #e2e8f0;
+    --text-2:        #94a3b8;
+    --muted:         #64748b;
+    --muted-light:   #475569;
+    --border:        #2d3748;
+    --border-strong: #3d4a5c;
+    --shadow-xs: 0 1px 2px rgba(0,0,0,0.4);
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.3);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.3);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.4);
+    --great: #34d399; --great-bg: rgba(52,211,153,0.12);  --great-border: rgba(52,211,153,0.3);
+    --fair:  #fbbf24; --fair-bg:  rgba(251,191,36,0.12);  --fair-border:  rgba(251,191,36,0.3);
+    --over:  #f87171; --over-bg:  rgba(248,113,113,0.12); --over-border:  rgba(248,113,113,0.3);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -274,7 +301,7 @@
     padding: 5px 16px;
     border: 1.5px solid var(--border-strong);
     border-radius: 20px;
-    background: #fff;
+    background: var(--card);
     color: var(--muted);
     font-size: 0.76rem;
     font-family: var(--font-body);
@@ -689,7 +716,7 @@
   tbody tr:last-child td { border-bottom: none; }
 
   .score-bar {
-    background: #e5e7eb;
+    background: var(--border);
     border-radius: 3px;
     height: 4px;
     width: 52px;
@@ -748,6 +775,59 @@
 
   footer strong { color: var(--accent); font-weight: 700; }
   footer .footer-dot { opacity: 0.3; }
+
+  /* ── Dark Mode Header override ───────────────────────────────────────── */
+  [data-theme="dark"] header {
+    background-image:
+      linear-gradient(135deg, #0d1117 0%, #111827 50%, #1a1f2e 100%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2323e5db' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  [data-theme="dark"] thead th { background: #23e5db; color: #0f1117; }
+  [data-theme="dark"] thead th:hover { background: #1dd6cc; }
+  [data-theme="dark"] .deal-link { background: #23e5db; color: #0f1117; }
+  [data-theme="dark"] .deal-link svg { stroke: #0f1117; }
+  [data-theme="dark"] .deal-link:hover { background: #1dd6cc; }
+
+  /* ── Theme Toggle Button ─────────────────────────────────────────────── */
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-strong);
+    background: var(--card);
+    cursor: pointer;
+    padding: 0;
+    color: var(--muted);
+    transition: background 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s;
+    flex-shrink: 0;
+  }
+
+  .theme-toggle:hover {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+
+  .theme-toggle svg {
+    width: 15px; height: 15px;
+    fill: none; stroke: currentColor;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    transition: opacity 0.18s, transform 0.25s;
+    position: absolute;
+  }
+
+  .theme-toggle { position: relative; }
+
+  .icon-moon { opacity: 1; transform: rotate(0deg); }
+  .icon-sun  { opacity: 0; transform: rotate(90deg); }
+
+  [data-theme="dark"] .icon-moon { opacity: 0; transform: rotate(-90deg); }
+  [data-theme="dark"] .icon-sun  { opacity: 1; transform: rotate(0deg); }
 
   /* ── Responsive: Tablet (≤1024px) ───────────────────────────────────── */
   @media (max-width: 1024px) {
@@ -834,6 +914,12 @@
           <span class="count" id="activeCount">0</span> filter<span id="activePlural">s</span> active
         </span>
         <button class="reset-btn" onclick="resetFilters()">Reset</button>
+        <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode">
+          <!-- Moon icon (shown in light mode) -->
+          <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+          <!-- Sun icon (shown in dark mode) -->
+          <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
       </div>
     </div>
   </div>
@@ -969,8 +1055,45 @@
 
 <script>
 const ALL_LISTINGS = {{ all_listings_json | safe }};
-const ACCENT = '#002f34';
-const GREEN  = '#23e5db';
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+
+function getThemeColors() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  return {
+    accent:      dark ? '#23e5db' : '#002f34',
+    accentAlpha: dark ? 'rgba(35,229,219,0.10)' : 'rgba(0,47,52,0.07)',
+    green:       dark ? '#23e5db' : '#23e5db',
+    grid:        dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)',
+    tick:        dark ? '#64748b' : '#6b7280',
+    legendText:  dark ? '#94a3b8' : '#374151',
+    fuelColors:  dark
+      ? ['#23e5db','#7c3aed','#64748b','#fbbf24','#f87171']
+      : ['#002f34','#23e5db','#6b7280','#d97706','#7c3aed'],
+  };
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('sekondly-theme', theme);
+  // Re-render charts with new colors
+  renderCharts(currentFiltered, currentFiltered.map(l => l.price).filter(p => p > 0));
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+// Init theme from localStorage or OS preference
+(function initTheme() {
+  const saved = localStorage.getItem('sekondly-theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+  } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+})();
 
 let activeFilters = { year: new Set(), fuel: new Set(), transmission: new Set(), variant: new Set() };
 let chartInstances = {};
@@ -1134,7 +1257,16 @@ function onSortHeader(colIdx) {
 // ── Charts ────────────────────────────────────────────────────────────────────
 
 function renderCharts(filtered, prices) {
-  const base = { responsive: true, plugins: { legend: { display: false } } };
+  const C = getThemeColors();
+  const scaleOpts = {
+    grid:  { color: C.grid },
+    ticks: { color: C.tick },
+  };
+  const base = {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { x: scaleOpts, y: scaleOpts },
+  };
   Object.values(chartInstances).forEach(c => c.destroy());
   chartInstances = {};
 
@@ -1142,8 +1274,8 @@ function renderCharts(filtered, prices) {
   if (dist.labels.length) {
     chartInstances.dist = new Chart(document.getElementById('chartDist'), {
       type: 'bar',
-      data: { labels: dist.labels, datasets: [{ data: dist.data, backgroundColor: ACCENT, borderRadius: 4 }] },
-      options: { ...base, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+      data: { labels: dist.labels, datasets: [{ data: dist.data, backgroundColor: C.accent, borderRadius: 4 }] },
+      options: { ...base, scales: { x: scaleOpts, y: { ...scaleOpts, beginAtZero: true, ticks: { ...scaleOpts.ticks, stepSize: 1 } } } }
     });
   }
 
@@ -1156,25 +1288,24 @@ function renderCharts(filtered, prices) {
         labels: yearKeys,
         datasets: [{
           data: yearKeys.map(k => median(byYear[k].map(l => l.price))),
-          borderColor: ACCENT, backgroundColor: 'rgba(0,47,52,0.07)',
-          pointBackgroundColor: ACCENT, tension: 0.35, fill: true
+          borderColor: C.accent, backgroundColor: C.accentAlpha,
+          pointBackgroundColor: C.accent, tension: 0.35, fill: true
         }]
       },
-      options: { ...base, scales: { y: { ticks: { callback: v => '₹' + (v / 1e5).toFixed(1) + 'L' } } } }
+      options: { ...base, scales: { x: scaleOpts, y: { ...scaleOpts, ticks: { ...scaleOpts.ticks, callback: v => '₹' + (v / 1e5).toFixed(1) + 'L' } } } }
     });
   }
 
   const byFuel = groupBy(filtered.filter(l => l.fuel_type), 'fuel_type');
   const fuelKeys = Object.keys(byFuel).filter(k => k !== 'Unknown').sort();
-  const fuelColors = ['#002f34', '#23e5db', '#6b7280', '#d97706', '#7c3aed'];
   if (fuelKeys.length) {
     chartInstances.fuel = new Chart(document.getElementById('chartFuel'), {
       type: 'bar',
       data: {
         labels: fuelKeys.map(cap),
-        datasets: [{ data: fuelKeys.map(k => median(byFuel[k].map(l => l.price))), backgroundColor: fuelColors, borderRadius: 4 }]
+        datasets: [{ data: fuelKeys.map(k => median(byFuel[k].map(l => l.price))), backgroundColor: C.fuelColors, borderRadius: 4 }]
       },
-      options: { ...base, scales: { y: { ticks: { callback: v => '₹' + (v / 1e5).toFixed(1) + 'L' } } } }
+      options: { ...base, scales: { x: scaleOpts, y: { ...scaleOpts, ticks: { ...scaleOpts.ticks, callback: v => '₹' + (v / 1e5).toFixed(1) + 'L' } } } }
     });
   }
 
@@ -1185,9 +1316,12 @@ function renderCharts(filtered, prices) {
       type: 'doughnut',
       data: {
         labels: txKeys.map(k => cap(k) + ' (' + byTx[k].length + ')'),
-        datasets: [{ data: txKeys.map(k => median(byTx[k].map(l => l.price))), backgroundColor: [ACCENT, GREEN, '#6b7280'] }]
+        datasets: [{ data: txKeys.map(k => median(byTx[k].map(l => l.price))), backgroundColor: [C.accent, C.green, '#6b7280'] }]
       },
-      options: { responsive: true, plugins: { legend: { display: true, position: 'bottom' } } }
+      options: {
+        responsive: true,
+        plugins: { legend: { display: true, position: 'bottom', labels: { color: C.legendText } } }
+      }
     });
   }
 }
